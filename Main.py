@@ -72,6 +72,8 @@ def main():
         insert_employee(cursor, id, name, age, position)
         connection.commit()
         show_all(cursor)
+    elif request == 2:
+        print("Deleting")
     elif request == 3:
         show_all(cursor)
     elif request == 5:
