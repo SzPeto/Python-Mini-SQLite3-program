@@ -38,6 +38,17 @@ def show_all(cursor):
     except Exception as e:
         print(f"Something went wrong with showing the database : {e}")
 
+def search(cursor, column, keyword):
+    query = f"SELECT * FROM employees WHERE {column} = ?"
+    try:
+        cursor.execute(query, (keyword,))
+        result = cursor.fetchall()
+        for i in range(0, len(result)):
+            print(result[i])
+    except Exception as e:
+        print(f"Something went wrong with searching the keyword : {e}")
+
+
 # Main method **************************************************************************************
 def main():
 
@@ -56,13 +67,32 @@ def main():
             name = str(input("Enter the employee name : "))
             age = int(input("Enter the employee age : "))
             position = str(input("Enter the employee position : "))
-            show_all(cursor)
         except Exception as e:
             print(f"Something went wrong with inputting the values : {e}")
         insert_employee(cursor, id, name, age, position)
         connection.commit()
+        show_all(cursor)
     elif request == 3:
         show_all(cursor)
+    elif request == 5:
+        type = int(input("What keyword would you like to use? 1:id, 2:name, 3:age, 4:position : "))
+        if type == 1:
+            column = "id"
+            keyword = int(input("Please enter the id to search : "))
+            search(cursor, column, keyword)
+        elif type == 2:
+            column = "name"
+            keyword = str(input("Please enter the name to search : "))
+            search(cursor, column, keyword)
+        elif type == 3:
+            column = "age"
+            keyword = int(input("Please enter the age to search : "))
+            search(cursor, column, keyword)
+        elif type == 4:
+            column = "position"
+            keyword = str(input("Please enter the position to search : "))
+            search(cursor, column, keyword)
+
 
 
     cursor.close()
