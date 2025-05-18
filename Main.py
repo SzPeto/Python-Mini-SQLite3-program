@@ -1,12 +1,26 @@
+import os.path
 import sqlite3
+import sys
+
 
 def create_connection(db_name):
+
+    try:
+        dir_name = os.path.dirname(db_name)
+        if dir_name and not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+            print(f"Directory : {dir_name} successfully created")
+    except Exception as e:
+        print(f"Something went wrong creating the directory : {e}")
+        sys.exit(1)
+
     try:
         connection = sqlite3.connect(db_name)
         print("Connection established!")
         return connection
     except Exception as e:
-        print(f"Something went wrong, error message : {e}")
+        print(f"Something went wrong connecting to the database: {e}")
+        sys.exit(1)
 
 def create_table(cursor):
     # IF NOT EXISTS - this is a statement on its own
