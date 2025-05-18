@@ -3,7 +3,7 @@ import sqlite3
 def create_connection(db_name):
     try:
         connection = sqlite3.connect(db_name)
-        print("Database created!")
+        print("Connection established!")
         return connection
     except Exception as e:
         print(f"Something went wrong, error message : {e}")
@@ -41,17 +41,32 @@ def show_all(cursor):
 def search(cursor, column, keyword):
     query = f"SELECT * FROM employees WHERE {column} = ?"
     try:
-        cursor.execute(query, (keyword,))
+        cursor.execute(query, (keyword,)) # Put a comma here to treat it as tuple
         result = cursor.fetchall()
         for i in range(0, len(result)):
             print(result[i])
     except Exception as e:
         print(f"Something went wrong with searching the keyword : {e}")
 
+def delete(cursor, column, keyword):
+    query = f"DELETE FROM employees WHERE {column} = ?"
+
+    try:
+        cursor.execute(query, (keyword,)) # Put a comma here to treat it as tuple
+        show_all(cursor)
+        print(f"{column} : {keyword} successfully deleted")
+    except Exception as e:
+        print(f"Something went wrong while deleting : {e}")
+
 
 # Main method **************************************************************************************
 def main():
 
+    is_exit = False
+    is_valid_delete = False
+    is_valid_search = False
+    is_valid_id = False
+    is_valid_age = False
     # Creating the connection
     connection = create_connection("Databases\\employees.db")
     cursor = connection.cursor()
@@ -60,40 +75,114 @@ def main():
     create_table(cursor)
 
     # Creating a mini program to add to the database
-    request = int(input("Please choose an option : 1:Add, 2:Delete, 3:Show database, 4:Update, 5:Search : "))
-    if request == 1:
-        try:
-            id = int(input("Enter the employee id : "))
-            name = str(input("Enter the employee name : "))
-            age = int(input("Enter the employee age : "))
-            position = str(input("Enter the employee position : "))
-        except Exception as e:
-            print(f"Something went wrong with inputting the values : {e}")
-        insert_employee(cursor, id, name, age, position)
-        connection.commit()
-        show_all(cursor)
-    elif request == 2:
-        print("Deleting")
-    elif request == 3:
-        show_all(cursor)
-    elif request == 5:
-        type = int(input("What keyword would you like to use? 1:id, 2:name, 3:age, 4:position : "))
-        if type == 1:
-            column = "id"
-            keyword = int(input("Please enter the id to search : "))
-            search(cursor, column, keyword)
-        elif type == 2:
-            column = "name"
-            keyword = str(input("Please enter the name to search : "))
-            search(cursor, column, keyword)
-        elif type == 3:
-            column = "age"
-            keyword = int(input("Please enter the age to search : "))
-            search(cursor, column, keyword)
-        elif type == 4:
-            column = "position"
-            keyword = str(input("Please enter the position to search : "))
-            search(cursor, column, keyword)
+    while not is_exit:
+        name = ""
+        position = ""
+        is_valid_search = False
+        is_valid_delete = False
+        is_valid_age = False
+        is_valid_id = False
+        request = input("Please choose an option : 1:Add, 2:Delete, 3:Show database, 4:Update, 5:Search, 6:Exit : ")
+        if request.isdigit():
+            request = int(request)
+            if request < 1 or request > 6:
+                print("Please enter a number in valid range")
+                continue
+
+        else:
+            print("Please enter a valid number")
+            continue
+
+        if request == 1:
+            try:
+                while not is_valid_id:
+                    id = input("Enter the employee id : ")
+                    if id.isdigit():
+                        id = int(id)
+                        is_valid_id = True
+                    else:
+                        print("You must enter a number")
+                        continue
+                while not name:
+                    name = str(input("Enter the employee name and surname: "))
+                    if not name:
+                        print("Name cannot be empty")
+                while not is_valid_age:
+                    age = input("Enter the employee age : ")
+                    if age.isdigit():
+                        age = int(age)
+                        is_valid_age = True
+                    else:
+                        print("You must enter a number")
+                while not position:
+                    position = str(input("Enter the employee position : "))
+                    if not position:
+                        print("Position cannot be empty")
+                insert_employee(cursor, id, name, age, position)
+                connection.commit()
+                show_all(cursor)
+            except Exception as e:
+                print(f"Something went wrong with inputting the values : {e}")
+        elif request == 2:
+            while not is_valid_delete:
+                type_delete = input("What keyword would you like to use for delete? 1:id, 2:name, 3:age, 4:position : ")
+                if type_delete.isdigit():
+                    type_delete = int(type_delete)
+                    if type_delete < 1 or type_delete > 4:
+                        print("You must enter a number in valid range")
+                        continue
+                    is_valid_delete = True
+                else:
+                    print("You must enter a number")
+
+            if type_delete == 1:
+                column = "id"
+                keyword = int(input("Please enter the id to delete : "))
+            elif type_delete == 2:
+                column = "name"
+                keyword = str(input("Please enter the name to delete : "))
+            elif type_delete == 3:
+                column = "age"
+                keyword = int(input("Please enter the age to delete : "))
+            elif type_delete == 4:
+                column = "position"
+                keyword = str(input("Please enter the position to delete : "))
+            delete(cursor, column, keyword)
+            connection.commit()
+
+        elif request == 3:
+            show_all(cursor)
+        elif request == 5:
+            while not is_valid_search:
+                type_search = input("What keyword would you like to use for search? 1:id, 2:name, 3:age, 4:position : ")
+                if type_search.isdigit():
+                    type_search = int(type_search)
+                    if type_search < 1 or type_search > 4:
+                        print("You must enter a number in valid range")
+                        continue
+                    is_valid_search = True
+                else:
+                    print("You must enter a number")
+
+            if type_search == 1:
+                column = "id"
+                keyword = int(input("Please enter the id to search : "))
+                search(cursor, column, keyword)
+            elif type_search == 2:
+                column = "name"
+                keyword = str(input("Please enter the name to search : "))
+                search(cursor, column, keyword)
+            elif type_search == 3:
+                column = "age"
+                keyword = int(input("Please enter the age to search : "))
+                search(cursor, column, keyword)
+            elif type_search == 4:
+                column = "position"
+                keyword = str(input("Please enter the position to search : "))
+                search(cursor, column, keyword)
+        elif request == 6:
+            is_exit = True
+        print("\n")
 
 
 
