@@ -47,8 +47,11 @@ def show_all(cursor):
     try:
         cursor.execute(query)
         result = cursor.fetchall()
-        for i in range(0, len(result)):
-            print(result[i])
+        if result:
+            for i in range(0, len(result)):
+                print(result[i])
+        else:
+            print("Empty database")
     except Exception as e:
         print(f"Something went wrong with showing the database : {e}")
 
@@ -61,6 +64,18 @@ def search(cursor, column, keyword):
             print(result[i])
     except Exception as e:
         print(f"Something went wrong with searching the keyword : {e}")
+
+def update_user(cursor, column_select, column_modify, value_select, value_modify):
+    print(f"cselect : {column_select}, cmodify : {column_modify}, vselect : {value_select}, vmodify : {value_modify}")
+    query = f"UPDATE employees SET {column_modify} = ? WHERE {column_select} = ?"
+
+    try:
+        cursor.execute(query, (value_modify, value_select))
+        print(f"Employees entry of {column_select} : {value_select} has been updated. The new value of {column_modify} "
+              f"has been updated to : {value_modify}")
+        show_all(cursor)
+    except Exception as e:
+        print(f"Something went wrong during updating the database : {e}")
 
 def delete(cursor, column, keyword):
     query = f"DELETE FROM employees WHERE {column} = ?"
@@ -96,6 +111,9 @@ def main():
         is_valid_delete = False
         is_valid_age = False
         is_valid_id = False
+        is_valid_update = False
+        is_valid_value_select = False
+        is_valid_value_modify = False
         request = input("Please choose an option : 1:Add, 2:Delete, 3:Show database, 4:Update, 5:Search, 6:Exit : ")
         if request.isdigit():
             request = int(request)
@@ -163,9 +181,103 @@ def main():
                 keyword = str(input("Please enter the position to delete : "))
             delete(cursor, column, keyword)
             connection.commit()
-
         elif request == 3:
             show_all(cursor)
+        elif request == 4:
+            while not is_valid_update:
+                is_valid_update = False
+
+                # Configuring the selection *************
+                update_request_select = input(
+                    f"What keyword would you like to use to select the entry for modification? "
+                    f"1:id, 2:name, 3:age, 4:position")
+                if update_request_select.isdigit():
+                    update_request_select = int(update_request_select)
+                    if update_request_select < 1 or update_request_select > 4:
+                        print("You have to enter a number between 1 and 4")
+                        continue
+                else:
+                    print("You have to enter a number")
+                    continue
+
+                if update_request_select == 1:
+                    column_select = "id"
+                    is_valid_value_select = False
+                    while not is_valid_value_select:
+                        is_valid_value_select = False
+                        value_select = input("Please enter the id of the entry to modify : ")
+                        if value_select.isdigit():
+                            value_select = int(value_select)
+                            is_valid_value_select = True
+                        else:
+                            print("You must enter a number")
+                            continue
+                elif update_request_select == 2:
+                    column_select = "name"
+                    value_select = input("Please enter the name of the entry to modify : ")
+                elif update_request_select == 3:
+                    column_select = "age"
+                    is_valid_value_select = False
+                    while not is_valid_value_select:
+                        is_valid_value_select = False
+                        value_select = input("Please enter the age of the entry to modify : ")
+                        if value_select.isdigit():
+                            value_select = int(value_select)
+                            is_valid_value_select = True
+                        else:
+                            print("You must enter a number")
+                            continue
+                elif update_request_select == 4:
+                    column_select = "position"
+                    value_select = input("Please enter the position of the entry to modify : ")
+
+                # Configuring the modification *************
+                update_request_modify = input(
+                    f"Which field of the selected entry would you like to modify? "
+                    f"1:id, 2:name, 3:age, 4:position")
+                if update_request_modify.isdigit():
+                    update_request_modify = int(update_request_modify)
+                    if update_request_modify < 1 or update_request_modify > 4:
+                        print("You have to enter a number between 1 and 4")
+                        continue
+                else:
+                    print("You have to enter a number")
+                    continue
+
+                if update_request_modify == 1:
+                    column_modify = "id"
+                    is_valid_value_modify = False
+                    while not is_valid_value_modify:
+                        is_valid_value_modify = False
+                        value_modify = input("Please enter the id of the entry to modify : ")
+                        if value_modify.isdigit():
+                            value_modify = int(value_modify)
+                            is_valid_value_modify = True
+                        else:
+                            print("You must enter a number")
+                            continue
+                elif update_request_modify == 2:
+                    column_modify = "name"
+                    value_modify = input("Please enter the name of the entry to modify : ")
+                elif update_request_modify == 3:
+                    column_modify = "age"
+                    is_valid_value_modify = False
+                    while not is_valid_value_modify:
+                        is_valid_value_modify = False
+                        value_modify = input("Please enter the age of the entry to modify : ")
+                        if value_modify.isdigit():
+                            value_modify = int(value_modify)
+                            is_valid_value_modify = True
+                        else:
+                            print("You must enter a number")
+                            continue
+                elif update_request_modify == 4:
+                    column_modify = "position"
+                    value_modify = input("Please enter the position of the entry to modify : ")
+                is_valid_update = True
+            update_user(cursor, column_select, column_modify, value_select, value_modify)
+            connection.commit()
+
         elif request == 5:
             while not is_valid_search:
                 type_search = input("What keyword would you like to use for search? 1:id, 2:name, 3:age, 4:position : ")
@@ -195,6 +307,7 @@ def main():
                 keyword = str(input("Please enter the position to search : "))
                 search(cursor, column, keyword)
         elif request == 6:
+            print("Exiting...")
             is_exit = True
         print("\n")
 
