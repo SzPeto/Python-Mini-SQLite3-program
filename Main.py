@@ -22,17 +22,21 @@ def create_connection(db_name):
         print(f"Something went wrong connecting to the database: {e}")
         sys.exit(1)
 
-def create_table(cursor):
+def create_table(cursor, table_name):
     # IF NOT EXISTS - this is a statement on its own
-    query = """
-            CREATE TABLE IF NOT EXISTS employees(
+    query = f"""
+            CREATE TABLE IF NOT EXISTS {table_name}(
                 id INTEGER PRIMARY KEY UNIQUE,
                 name TEXT NOT NULL,
                 age INTEGER,
                 position TEXT
             )
         """
-    cursor.execute(query)
+    try:
+        cursor.execute(query)
+        print(f"The {table_name} table was created successfully")
+    except Exception as e:
+        print(f"Something went wrong during creating the table : {e}")
 
 def insert_employee(cursor, id: int, name: str, age: int, position: str):
     query = "INSERT INTO employees (id, name, age, position) VALUES (?, ?, ?, ?)"
@@ -40,7 +44,7 @@ def insert_employee(cursor, id: int, name: str, age: int, position: str):
         cursor.execute(query, (id, name, age, position))
         print("Values inserted")
     except Exception as e:
-        print(f"Something went wring while inserting : {e}")
+        print(f"Something went wrong while inserting : {e}")
 
 def show_all(cursor):
     query = "SELECT * FROM employees"
@@ -87,6 +91,15 @@ def delete(cursor, column, keyword):
     except Exception as e:
         print(f"Something went wrong while deleting : {e}")
 
+def delete_all(cursor):
+    query = f"DROP TABLE employees"
+
+    try:
+        cursor.execute(query)
+        print("The table was deleted")
+    except Exception as e:
+        print(f"Something went wrong deleting the entire table : {e}")
+
 
 # Main method **************************************************************************************
 def main():
@@ -96,25 +109,28 @@ def main():
     is_valid_search = False
     is_valid_id = False
     is_valid_age = False
+    is_valid_main_delete = False
     # Creating the connection
     connection = create_connection("Databases\\employees.db")
     cursor = connection.cursor()
 
     # Creating the table
-    create_table(cursor)
+    create_table(cursor, "employees")
 
     # Creating a mini program to add to the database
     while not is_exit:
         name = ""
         position = ""
         is_valid_search = False
+        is_valid_main_delete = False
         is_valid_delete = False
         is_valid_age = False
         is_valid_id = False
         is_valid_update = False
         is_valid_value_select = False
         is_valid_value_modify = False
-        request = input("Please choose an option : 1:Add, 2:Delete, 3:Show database, 4:Update, 5:Search, 6:Exit : ")
+        request = input("Please choose an option : 1:Add, 2:Delete, 3:Show database, 4:Update, 5:Search, "
+                        "6:Exit : ")
         if request.isdigit():
             request = int(request)
             if request < 1 or request > 6:
@@ -156,31 +172,48 @@ def main():
             except Exception as e:
                 print(f"Something went wrong with inputting the values : {e}")
         elif request == 2:
-            while not is_valid_delete:
-                type_delete = input("What keyword would you like to use for delete? 1:id, 2:name, 3:age, 4:position : ")
-                if type_delete.isdigit():
-                    type_delete = int(type_delete)
-                    if type_delete < 1 or type_delete > 4:
-                        print("You must enter a number in valid range")
+            while not is_valid_main_delete:
+                is_valid_main_delete = False
+                main_delete_type = input("Delete 1:entire table, 2:one user : ")
+                if main_delete_type.isdigit():
+                    main_delete_type = int(main_delete_type)
+                    if main_delete_type < 1 or main_delete_type > 2:
+                        print("You must enter a number in a valid range")
                         continue
-                    is_valid_delete = True
+                    is_valid_main_delete = True
                 else:
                     print("You must enter a number")
+                    continue
+            if main_delete_type == 1:
+                delete_all(cursor)
+                connection.commit()
+            else:
+                while not is_valid_delete:
+                    is_valid_delete = False
+                    type_delete = input("What keyword would you like to use for delete? 1:id, 2:name, 3:age, 4:position : ")
+                    if type_delete.isdigit():
+                        type_delete = int(type_delete)
+                        if type_delete < 1 or type_delete > 4:
+                            print("You must enter a number in valid range")
+                            continue
+                        is_valid_delete = True
+                    else:
+                        print("You must enter a number")
 
-            if type_delete == 1:
-                column = "id"
-                keyword = int(input("Please enter the id to delete : "))
-            elif type_delete == 2:
-                column = "name"
-                keyword = str(input("Please enter the name to delete : "))
-            elif type_delete == 3:
-                column = "age"
-                keyword = int(input("Please enter the age to delete : "))
-            elif type_delete == 4:
-                column = "position"
-                keyword = str(input("Please enter the position to delete : "))
-            delete(cursor, column, keyword)
-            connection.commit()
+                if type_delete == 1:
+                    column = "id"
+                    keyword = int(input("Please enter the id to delete : "))
+                elif type_delete == 2:
+                    column = "name"
+                    keyword = str(input("Please enter the name to delete : "))
+                elif type_delete == 3:
+                    column = "age"
+                    keyword = int(input("Please enter the age to delete : "))
+                elif type_delete == 4:
+                    column = "position"
+                    keyword = str(input("Please enter the position to delete : "))
+                delete(cursor, column, keyword)
+                connection.commit()
         elif request == 3:
             show_all(cursor)
         elif request == 4:
